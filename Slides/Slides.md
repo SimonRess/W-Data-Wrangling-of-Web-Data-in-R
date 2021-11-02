@@ -1,7 +1,7 @@
 ---
 title: |
        ![](Slides_files/RUB.jpg){width=2.5in}
-subtitle:  "Workshop: Working with Strings in R"
+subtitle:  "Workshop: Data Wrangling of Web Data in R"
 author: "Simon Ress | Ruhr-Universität Bochum"
 #institute: "Conference: 56. Jahrestagung der DGSMP, Leipzig, 2021"
 date: "October 18, 2021"
@@ -15,10 +15,11 @@ output:
     slide_level: 3 # which header level should be printed as slides
     incremental: no
 header-includes:
+#Choose numbering format
   - \usetheme[numbering=fraction]{metropolis}
 #Define footer:
   - \definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
-  - \setbeamertemplate{frame footer}{\tiny{\textcolor{beaublue}{Workshop - Working with Strings in R | SIMON RESS}}}
+  - \setbeamertemplate{frame footer}{\tiny{\textcolor{beaublue}{Workshop - Data Wrangling of Web Data in R | SIMON RESS}}}
 #hide footer on title page:
   - |
     \makeatletter
@@ -46,11 +47,11 @@ header-includes:
   - |
     \makeatletter
     \def\ps@sectionpage{%
-      \setbeamertemplate{frame footer}{\tiny{\textcolor{beaublue}{Workshop - Working with Strings in R | SIMON RESS}}}
+      \setbeamertemplate{frame footer}{\tiny{\textcolor{beaublue}{Workshop - Data Wrangling of Web Data in R | SIMON RESS}}}
     }
     \addtobeamertemplate{section page}{\thispagestyle{sectionpage}}{}
     \makeatother
-#add secrtion numbers to TOC:
+#add section numbers to TOC:
   - |
     \setbeamertemplate{section in toc}{
     \leavevmode%
@@ -59,6 +60,25 @@ header-includes:
     }
     \setbeamertemplate{subsection in toc}{
     \leavevmode\leftskip=2.5em\inserttocsubsection\par}
+#Adjust representation of chunks
+  #Reduce space between code chunks and code output
+  - |
+    \setlength{\OuterFrameSep}{-4pt}
+    \makeatletter
+    \preto{\@verbatim}{\topsep=-10pt \partopsep=-10pt }
+    \makeatother
+  #Change background-color of source-code
+  - \definecolor{shadecolor}{RGB}{240,240,240}
+  #Set a frame around the results
+  - | 
+    \let\verbatim\undefined
+    \let\verbatimend\undefined
+    \DefineVerbatimEnvironment{verbatim}{Verbatim}{frame=single, rulecolor=\color{shadecolor}, framerule=0.3mm,framesep=1mm}
+#enable line breaks in chunks
+  - |
+    \usepackage{fvextra}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+#   \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,commandchars=\\\{\}}
 ---
 
 
@@ -66,221 +86,197 @@ header-includes:
 ### Content
 \tableofcontents[]
 
-# Base R
+# Setup
 
-## The base R functions for dealing with strings
-- *substr() / substring()*: Extract or replace substrings in a character vector by indicies.
-- *strsplit()*: Split the elements of a character vector x into substrings according to a given regular expression.
-- *paste()*: Concatenate n number of strings.
-- *nchar()*: Returns a vector of the number of characters of x.
+### Target
 
+**Meta information**
 
-### substr() / substring()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{substr()/substring():}
-  Extract or replace substrings in a character vector
-\end{block}
+- Finanzausschuss
+- Ausschüsse der 19. Wahlperiode (2017-2021)
+- Öffentliche Anhörungen
 
-```r
-num <- "12345678"
-substr(num, 4, 5)
-```
+URL: https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen
 
-```
-## [1] "45"
-```
+**Unit information** 
 
-```r
-substring(num, 1:3, 7)
-```
+- Committees
 
-```
-## [1] "1234567" "234567"  "34567"
-```
+URL: Needs to be scraped from main page
 
 
-### strsplit()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{strsplit():}
-  Split the elements of a character vector x into substrings according to a given character
-\end{block}
-
-```r
-str = "Splitting sentence into words"
-strsplit(str, " ")
-```
-
-```
-## [[1]]
-## [1] "Splitting" "sentence"  "into"      "words"
-```
-
-
-### paste()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{paste():}
-  Concatenate n number of strings
-\end{block}
-
-```r
-paste("Count number", "of characters")
-```
-
-```
-## [1] "Count number of characters"
-```
-
-
-### nchar()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{nchar():}
-  Returns a vector of the number of characters of x
-\end{block}
-
-```r
-nchar("Count number of characters")
-```
-
-```
-## [1] 26
-```
+### Configurate & Start Selenium/Browser
 
 
 
-## The base R functions for dealing regular expressions
-- *grep() / grepl()*: Search for matches of a regular expression/pattern in a character vector ans return the indices/a logical vector.
-- *regexpr() / gregexpr()*: Search a character vector for regular expression matches and return the indices of the string where the match begins and the length of the match.
-- *sub() / gsub()*: Search the first/all character vector/s for regular expression matches and replace that match with another string.
-
-
-### grep() / grepl()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{grep():}
-  Index of vector which matches regex
-\end{block}
 
 ```r
-grep("b+", c("abc", "bda", "cca a", "abd"))
-```
-
-```
-## [1] 1 2 4
-```
-
-\begin{block}{grepl():}
-  Logical if vector matches regex
-\end{block}
-
-```r
-grepl("b+", c("abc", "bda", "cca a", "abd"))
-```
-
-```
-## [1]  TRUE  TRUE FALSE  TRUE
+library(RSelenium)
+library(rvest) #for read_html(), html_elements()...
+#Free all ports
+  system("taskkill /im java.exe /f", intern=FALSE, ignore.stdout=FALSE)
+#Start a selenium & Assign client to an R-object  
+  rD <- rsDriver(port = 4561L, browser = "firefox")
+  remDr <- rD[["client"]]
+  #remDr$quit
 ```
 
 
-### regexpr()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{regexpr():}
-  Search a character vector for regular expression matches and return the indices of the string where the match begins and the length of the match
-\end{block}
+
+# Functions
+
+### Overview
+
+- Functions are **blocks of codes** which can be executed repeatedly by calling them
+- **Parameters** (data) can be passed into them, which are used by the code inside
+- **Data can be returned** from a function
+
+*Syntax:*
 
 ```r
-str = "Line 129: O that this too too solid flesh would melt,Thaw, and resolve itself into a dew!"
-regexpr("1",str)
+function_name <- function(arg_1, arg_2, ...) {
+     Function body 
+}
+```
+
+### Function Components
+The different parts of a function are:
+
+- **Function Name:** This is the actual name of the function. It is stored in R environment as an object with this name.
+- **Arguments:** An argument is a placeholder. When a function is invoked, you pass a value to the argument. Arguments are *optional*; that is, a function may contain no arguments. Also arguments *can* have default values.
+- **Function Body:** The function body contains a collection of statements that defines what the function does.
+- **Return Value:** The return value of a function is the last expression in the function body to be evaluated.
+
+### Examplary Function 
+
+
+```r
+square <- function(value = 1, factor = 1) {
+     return(value^factor)
+}
+square() #use defaut args
 ```
 
 ```
-## [1] 6
-## attr(,"match.length")
 ## [1] 1
-## attr(,"index.type")
-## [1] "chars"
-## attr(,"useBytes")
-## [1] TRUE
 ```
-
-
-### sub() / gsub()
-<!-- this sets the background -->
-\metroset{block=fill} 
-\begin{block}{sub():}
-  Search **first* match of an regular expression and replace it
-\end{block}
 
 ```r
-x <- "<dd>Found on January 1, 2007</dd>"
-sub("<dd>[F|f]ound on |</dd>", "", x)
+square(2,3) #use args by position
 ```
 
 ```
-## [1] "January 1, 2007</dd>"
+## [1] 8
 ```
-
-\begin{block}{gsub:}
-  Search **all** matches of an regular expression and replace it
-\end{block}
 
 ```r
-x <- "<dd>Found on January 1, 2007</dd>"
-gsub("<dd>[F|f]ound on |</dd>", "", x)
+square(factor=2, value=5) #use args by name
 ```
 
 ```
-## [1] "January 1, 2007"
+## [1] 25
 ```
 
-# Regular Expressions
-
-### Match Characters
-![](Slides_files/Match_Characters.png){width=3.8in}
-
-### Alternates
-![](Slides_files/Alternates.png){width=3.5in}
-
-### Anchors
-![](Slides_files/Anchors.png){width=3.5in}
-
-### Look Arounds
-![](Slides_files/Look_Arounds.png){width=3.5in}
-
-### Quantifiers
-![](Slides_files/Quantifiers.png){width=3.5in}
 
 
-# Package: Stringr
+## Define savepage()
 
-### String basics
 
-The stringr package provides a series of functions implementing much of the regular expression functionality in R but with a more consistent and rationalized interface.
+```r
+#Load url & return content as r-object 
+  savepage <- function(url){
+    #Navigate to starting page
+      remDr$navigate(url)
+    #Wait until page is loaded  
+      Sys.sleep(abs(rnorm(1, 2, 1)))
+    #Save content to an R-object
+      remDr$getPageSource(header = TRUE)[[1]] %>%  
+        read_html() %>% 
+        return()
+  }
+```
+*Note: [[1]] behinde getPageSource() unlist the output -> makes it searchable*
 
-## Detect Matches
-![](Slides_files/Stringr-Detect_Matches.png){width=3in}
+## Usage of savepage()
 
-## Subset Strings
-![](Slides_files/Stringr-Subset_Strings.png){width=3in}
+```r
+#navigate to url & save content as r-object
+page <- savepage("https://www.bundestag.de/ webarchiv/Ausschuesse/ausschuesse19/a07/ Anhoerungen")
+page
+```
 
-## Manage Lengths
-![](Slides_files/Stringr-Manage_Lengths.png){width=3in}
 
-## Mutate Strings
-![](Slides_files/Stringr-Mutate_Strings.png){width=3in}
+```
+## {html_document}
+## <html xml:lang="de" dir="ltr" class="detection-firefox" lang="de">
+## [1] <head>\n<meta http-equiv="Content-Type" content="text/html; charset=UTF-8 ...
+## [2] <body class="bt-archived-page">\n  <div class="bt-archive-banner">\n    < ...
+```
 
-### Extra: Join and Split 
-![](Slides_files/Stringr-Join_and_Split.png){width=2.8in}
+# Loops & apply-family
 
-### Extra: Order Strings
-![](Slides_files/Stringr-Order_Strings.png){width=3in}
+## Overview
 
-### Extra: Helpers
-![](Slides_files/Stringr-Helpers.png){width=3in}
+## for-loop
+
+
+## while-loop
+- With the while loop we can execute a set of statements as long as a condition is TRUE
+- With the break statement, we can stop the loop even if the while condition is TRUE:
+- With the next statement, we can skip an iteration without terminating the loop:
+
+
+```r
+i <- 1
+while (i < 6) {
+  print(i)
+  i <- i + 1
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+## [1] 5
+```
+
+## apply functions
+
+# Dplyr - Gramma of Data Manipulation
+
+## Overview
+
+
+# Purr
+
+## Overview
+"purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
+
+
+```r
+if(!require("purrr")) install.packages("purrr") 
+  library(purrr) # for fill() 
+mtcars %>%
+  split(.$cyl) %>% # from base R
+  map(~ lm(mpg ~ wt, data = .)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
+```
+
+```
+##         4         6         8 
+## 0.5086326 0.4645102 0.4229655
+```
+
+# Helpful Sources
+- [purr: Overview](https://purrr.tidyverse.org/)
+- [purr: References](https://purrr.tidyverse.org/reference/index.html)
+- [purr: Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf)
+
+
+
 
 
 # Helpful sources

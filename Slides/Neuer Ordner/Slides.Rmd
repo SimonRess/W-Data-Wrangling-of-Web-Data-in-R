@@ -1,0 +1,69 @@
+---
+output:
+  beamer_presentation:
+    keep_md: true
+    keep_tex: no
+    latex_engine: xelatex
+header-includes:
+#enable line breaks in chunks
+  - |
+    \usepackage{fvextra}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+#   \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+```{r setup, include=FALSE}
+if(!require("tidyverse")) install.packages("tidyverse") 
+  library(tidyverse) # for fill() 
+if(!require("formatR")) install.packages("formatR")
+  library(formatR)
+library(knitr)
+knitr::opts_chunk$set(echo = T,
+                      eval = T)
+```
+
+# Sub-problem 1
+```{r Selenium, results='hide', message=F, warning=F}
+if(!require("RSelenium")) install.packages("RSelenium")
+library(RSelenium)
+if(!require("rvest")) install.packages("rvest")
+library(rvest) #for read_html(), html_elements()...
+#Free all ports
+  system("taskkill /im java.exe /f", intern=FALSE, ignore.stdout=FALSE)
+#Start a selenium & Assign client to an R-object  
+  rD <- rsDriver(port = 4561L, browser = "firefox")
+  remDr <- rD[["client"]]
+  #remDr$quit
+```
+
+# Define savepage()
+```{r define_savepage}
+#Load url & return content as r-object 
+  savepage <- function(url){
+    #Navigate to starting page
+      remDr$navigate(url)
+    #Wait until page is loaded  
+      Sys.sleep(abs(rnorm(1, 2, 1)))
+    #Save content to an R-object
+      remDr$getPageSource(header = TRUE)[[1]] %>%  
+        read_html() %>% 
+        return()
+  }
+```
+*Note: [[1]] behinde getPageSource() unlist the output -> makes it searchable*
+
+# Sub-problem 2
+```{r Sub-problem2}
+#navigate to url & save content as r-object
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+```
+
+# Sub-problem 3
+```{r Sub-problem3}
+page
+```
+
+# Sub-problem 4
+```{r Sub-problem4}
+html_element(page, xpath= "head/meta[@property='og:image']")
+```
