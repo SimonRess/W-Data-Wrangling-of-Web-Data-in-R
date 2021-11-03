@@ -157,10 +157,10 @@ function_name <- function(arg_1, arg_2, ...) {
 ```
 
 ### Function Components
-The different parts of a function are:
+The four parts of a function are:
 
 - **Function Name:** This is the actual name of the function. It is stored in R environment as an object with this name.
-- **Arguments:** An argument is a placeholder. When a function is invoked, you pass a value to the argument. Arguments are *optional*; that is, a function may contain no arguments. Also arguments *can* have default values.
+- **Arguments (*optional*):** An argument is a placeholder. When a function is invoked, you pass a value to the argument. Arguments *can* have default values.
 - **Function Body:** The function body contains a collection of statements that defines what the function does.
 - **Return Value:** The return value of a function is the last expression in the function body to be evaluated.
 
@@ -177,7 +177,7 @@ square(factor=2, value=5) #use args by name
 
 
 
-## Define savepage()
+### Define savepage()
 
 ```{r define_savepage}
 #Load url & return content as r-object 
@@ -194,7 +194,8 @@ square(factor=2, value=5) #use args by name
 ```
 *Note: [[1]] behinde getPageSource() unlist the output -> makes it searchable*
 
-## Usage of savepage()
+
+### Usage of savepage()
 ```{r use_savepage-print, eval=F}
 #navigate to url & save content as r-object
 page <- savepage("https://www.bundestag.de/ webarchiv/Ausschuesse/ausschuesse19/a07/ Anhoerungen")
@@ -202,28 +203,50 @@ page
 ```
 
 ```{r use_savepage-eval, echo=F, results='markup'}
-#navigate to url & save content as r-object
+#navigate to url & save content as r-object 
 page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
 page
 ```
 
-# Loops & apply-family
+# Iteration: Loops & Apply-family
 
-## Overview
+### Overview
 
-## for-loop
+- Often specific tasts needs to be executed multiple times
+- This iteration can be performed using loops or functions from the apply family
+
+Example:
+```{r example-iterations}
+mean(iris$Sepal.Length)
+mean(iris$Sepal.Width)
+mean(iris$Petal.Length)
+mean(iris$Petal.Width)
+```
+
+
+### for-loop
 - A for loop is used for iterating over a sequence:
 - With the break statement, we can stop the loop before it has looped through all the items:
 - With the next statement, we can skip an iteration without terminating the loop:
 
-```{r for}
-for (x in 1:10) {
-  if (x == 4)  break
+```{r for-basic}
+for (x in names(iris)) {
+  print(mean(iris[,x]))
+}
+```
+
+### for-loop: break
+*Breaking* the loop at certain conditions
+```{r for-break}
+for (x in cars$dist) {
+  if (x > 20)  break
   print(x)
 }
 ```
 
-```{r for_character}
+### for-loop: next
+*Skip* the code below and start over at certain conditions
+```{r for-next}
 fruits <- list("apple", "banana", "cherry")
 
 for (x in fruits) {
@@ -232,31 +255,102 @@ for (x in fruits) {
 }
 ```
 
-## while-loop
-- With the while loop we can execute a set of statements as long as a condition is TRUE
-- With the break statement, we can stop the loop even if the while condition is TRUE:
-- With the next statement, we can skip an iteration without terminating the loop:
+### while-loop
+- Execute a set of statements as long as a condition is TRUE
+- *break* statement stops the loop even if the while condition is TRUE:
+- *next* statement skips an iteration without terminating the loop:
 
-```{r while}
+```{r while-Basic}
 i <- 0
 while (i < 20) {
   i <- i + 1
-  if (i == 11) break
+  print(i)
+}
+```
+
+### while-loop: break
+*Breaking* the loop at certain conditions
+```{r while-break}
+i <- 0
+while (i < 20) {
+  i <- i + 1
+  if (i == 5) break
+  print(i)
+}
+```
+
+### while-loop: next
+*Skip* the code below and start over at certain conditions
+```{r while-next}
+i <- 0
+while (i < 10) {
+  i <- i + 1
   if (i %% 2) next
   print(i)
 }
 ```
 
-## apply functions
+### apply-family
+
+- The apply in R function can be feed with many functions to perform redundant application on a collection of object (data frame, list, vector, etc.). 
+- The purpose of apply() is primarily to avoid explicit uses of loop constructs. 
+- Any function can be passed into
+
+### Main apply functions
+\fontsize{8}{10}\selectfont
+| Function        | Arguments                | Objective                                              | Input                      | Output              |
+|-----------------|--------------------------|--------------------------------------------------------|----------------------------|---------------------|
+| apply           | apply(x, MARGIN, FUN)    | Apply a function to the rows or columns or both        | Data frame or matrix       | vector, list, array |
+| lapply <br> (list)   | lapply(X, FUN)           | Apply a function to all the elements of the input      | List, vector or data frame | list                |
+| sapply <br> (simple) | sapply(X, FUN)           | Apply a function to all the elements of the input      | List, vector or data frame | vector or matrix    |
+| tapply <br> (tagged) | tapply(X, grouping, FUN) | Apply a function for each factor variable in an vector | Vector                     | matrix or array     |
+
+
+### apply()-usage
+apply(x, MARGIN, FUN)
+
+```{r apply}
+m1 <- matrix(C<-(1:10),nrow=4, ncol=4)
+m1
+apply(m1, 1, sum) #1=by row
+apply(m1, 2, sum) #2=by column
+```
+
+### lapply()-usage
+lapply(X, FUN)
+
+```{r lapply}
+lapply(cars, mean)
+```
+
+### sapply()-usage
+sapply(X, FUN)
+
+```{r lapply}
+sapply(1:4, print)
+```
+
+### tapply()-usage
+tapply(X, grouping, FUN)
+```{r tapply}
+tapply(iris$Sepal.Length , list(iris$Species), mean)
+```
+
+Similar to tapply() is aggregate() which returns a data frame
+```{r aggregate}
+aggregate(iris$Sepal.Length , list(iris$Species), mean)
+```
+
+
 
 # Dplyr - Gramma of Data Manipulation
 
-## Overview
+### Overview
 
 
 # Purr
 
-## Overview
+### Overview
 "purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
 
 ```{r map}

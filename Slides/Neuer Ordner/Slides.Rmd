@@ -22,8 +22,7 @@ knitr::opts_chunk$set(echo = T,
                       eval = T)
 ```
 
-# Sub-problem 1
-```{r Selenium, results='hide', message=F, warning=F}
+```{r Selenium, include=F}
 if(!require("RSelenium")) install.packages("RSelenium")
 library(RSelenium)
 if(!require("rvest")) install.packages("rvest")
@@ -33,11 +32,9 @@ library(rvest) #for read_html(), html_elements()...
 #Start a selenium & Assign client to an R-object  
   rD <- rsDriver(port = 4561L, browser = "firefox")
   remDr <- rD[["client"]]
-  #remDr$quit
 ```
 
-# Define savepage()
-```{r define_savepage}
+```{r define_savepage, include=F}
 #Load url & return content as r-object 
   savepage <- function(url){
     #Navigate to starting page
@@ -50,20 +47,18 @@ library(rvest) #for read_html(), html_elements()...
         return()
   }
 ```
-*Note: [[1]] behinde getPageSource() unlist the output -> makes it searchable*
 
-# Sub-problem 2
-```{r Sub-problem2}
-#navigate to url & save content as r-object
+# Sub-Problems
+```{r problems1-2, results='hide'}
+#Sub-problem 1
 page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+#Sub-problem 2
+system("taskkill /im java.exe /f", intern=FALSE, ignore.stdout=FALSE)
 ```
-
-# Sub-problem 3
-```{r Sub-problem3}
-page
-```
-
-# Sub-problem 4
-```{r Sub-problem4}
-html_element(page, xpath= "head/meta[@property='og:image']")
+```{r problems3-4}
+#Sub-problem 3
+html_element(page, xpath="//meta[10]") %>%
+  html_attr("content")
+#Sub-problem 4
+html_element(page,xpath="//meta[3]")
 ```

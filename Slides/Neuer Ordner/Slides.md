@@ -14,65 +14,35 @@ header-includes:
 
 
 
-# Sub-problem 1
+
+
+
+
+# Sub-Problems
 
 ```r
-if(!require("RSelenium")) install.packages("RSelenium")
-library(RSelenium)
-if(!require("rvest")) install.packages("rvest")
-library(rvest) #for read_html(), html_elements()...
-#Free all ports
-  system("taskkill /im java.exe /f", intern=FALSE, ignore.stdout=FALSE)
-#Start a selenium & Assign client to an R-object  
-  rD <- rsDriver(port = 4561L, browser = "firefox")
-  remDr <- rD[["client"]]
-  #remDr$quit
-```
-
-# Define savepage()
-
-```r
-#Load url & return content as r-object 
-  savepage <- function(url){
-    #Navigate to starting page
-      remDr$navigate(url)
-    #Wait until page is loaded  
-      Sys.sleep(abs(rnorm(1, 2, 1)))
-    #Save content to an R-object
-      remDr$getPageSource(header = TRUE)[[1]] %>%  
-        read_html() %>% 
-        return()
-  }
-```
-*Note: [[1]] behinde getPageSource() unlist the output -> makes it searchable*
-
-# Sub-problem 2
-
-```r
-#navigate to url & save content as r-object
+#Sub-problem 1
 page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+#Sub-problem 2
+system("taskkill /im java.exe /f", intern=FALSE, ignore.stdout=FALSE)
 ```
-
-# Sub-problem 3
 
 ```r
-page
+#Sub-problem 3
+html_element(page, xpath="//meta[10]") %>%
+  html_attr("content")
 ```
 
 ```
-## {html_document}
-## <html xml:lang="de" dir="ltr" class="detection-firefox" lang="de">
-## [1] <head>\n<meta http-equiv="Content-Type" content="text/html; charset=UTF-8 ...
-## [2] <body class="bt-archived-page">\n  <div class="bt-archive-banner">\n    < ...
+## [1] "https://www.bundestag.dehttps://www.bundestag.de/resource/image/244626/2x3/316/475/b16fd9b7ae2fc1b1e097c016394bdcb6/ie/default.jpg"
 ```
-
-# Sub-problem 4
 
 ```r
-html_element(page, xpath= "head/meta[@property='og:image']")
+#Sub-problem 4
+html_element(page,xpath="//meta[3]")
 ```
 
 ```
 ## {html_node}
-## <meta property="og:image" content="https://www.bundestag.dehttps://www.bundestag.de/resource/image/244626/2x3/316/475/b16fd9b7ae2fc1b1e097c016394bdcb6/ie/default.jpg">
+## <meta name="viewport" content="width=device-width, initial-scale=1">
 ```

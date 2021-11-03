@@ -140,10 +140,10 @@ function_name <- function(arg_1, arg_2, ...) {
 ```
 
 ### Function Components
-The different parts of a function are:
+The four parts of a function are:
 
 - **Function Name:** This is the actual name of the function. It is stored in R environment as an object with this name.
-- **Arguments:** An argument is a placeholder. When a function is invoked, you pass a value to the argument. Arguments are *optional*; that is, a function may contain no arguments. Also arguments *can* have default values.
+- **Arguments (*optional*):** An argument is a placeholder. When a function is invoked, you pass a value to the argument. Arguments *can* have default values.
 - **Function Body:** The function body contains a collection of statements that defines what the function does.
 - **Return Value:** The return value of a function is the last expression in the function body to be evaluated.
 
@@ -179,7 +179,7 @@ square(factor=2, value=5) #use args by name
 
 
 
-## Define savepage()
+### Define savepage()
 
 
 ```r
@@ -197,7 +197,8 @@ square(factor=2, value=5) #use args by name
 ```
 *Note: [[1]] behinde getPageSource() unlist the output -> makes it searchable*
 
-## Usage of savepage()
+
+### Usage of savepage()
 
 ```r
 #navigate to url & save content as r-object
@@ -213,24 +214,75 @@ page
 ## [2] <body class="bt-archived-page">\n  <div class="bt-archive-banner">\n    < ...
 ```
 
-# Loops & apply-family
+# Iteration: Loops & Apply-family
 
-## Overview
-
-## for-loop
+### Overview
 
 
-## while-loop
-- With the while loop we can execute a set of statements as long as a condition is TRUE
-- With the break statement, we can stop the loop even if the while condition is TRUE:
+
+### for-loop
+- A for loop is used for iterating over a sequence:
+- With the break statement, we can stop the loop before it has looped through all the items:
 - With the next statement, we can skip an iteration without terminating the loop:
 
 
 ```r
-i <- 1
-while (i < 6) {
-  print(i)
+for (x in 1:10) {
+  if (x == 4)  break
+  print(x)
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+```
+
+### for-loop: break
+*Breaking* the loop at certain conditions
+
+```r
+for (x in cars$dist) {
+  if (x > 20)  break
+  print(x)
+}
+```
+
+```
+## [1] 2
+## [1] 10
+## [1] 4
+```
+
+### for-loop: next
+*Skip* the code below and start over at certain conditions
+
+```r
+fruits <- list("apple", "banana", "cherry")
+
+for (x in fruits) {
+  if (x == "banana") next
+  print(x)
+}
+```
+
+```
+## [1] "apple"
+## [1] "cherry"
+```
+
+### while-loop
+- Execute a set of statements as long as a condition is TRUE
+- *break* statement stops the loop even if the while condition is TRUE:
+- *next* statement skips an iteration without terminating the loop:
+
+
+```r
+i <- 0
+while (i < 20) {
   i <- i + 1
+  print(i)
 }
 ```
 
@@ -240,18 +292,99 @@ while (i < 6) {
 ## [1] 3
 ## [1] 4
 ## [1] 5
+## [1] 6
+## [1] 7
+## [1] 8
+## [1] 9
+## [1] 10
+## [1] 11
+## [1] 12
+## [1] 13
+## [1] 14
+## [1] 15
+## [1] 16
+## [1] 17
+## [1] 18
+## [1] 19
+## [1] 20
 ```
 
-## apply functions
+### while-loop: break
+*Breaking* the loop at certain conditions
+
+```r
+i <- 0
+while (i < 20) {
+  i <- i + 1
+  if (i == 5) break
+  print(i)
+}
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+```
+
+### while-loop: next
+*Skip* the code below and start over at certain conditions
+
+```r
+i <- 0
+while (i < 10) {
+  i <- i + 1
+  if (i %% 2) next
+  print(i)
+}
+```
+
+```
+## [1] 2
+## [1] 4
+## [1] 6
+## [1] 8
+## [1] 10
+```
+
+### apply-family
+
+- The apply in R function can be feed with many functions to perform redundant application on a collection of object (data frame, list, vector, etc.). 
+- The purpose of apply() is primarily to avoid explicit uses of loop constructs. 
+- Any function can be passed into
+
+### Main apply functions
+\fontsize{8}{10}\selectfont
+| Function        | Arguments~~~~~~~~~~~~    | Objective                                              | Input                      | Output              |
+|-----------------|--------------------------|--------------------------------------------------------|----------------------------|---------------------|
+| apply           | apply(x, MARGIN, FUN)    | Apply a function to the rows or columns or both        | Data frame or matrix       | vector, list, array |
+| lapply <br> (list)   | lapply(X, FUN)           | Apply a function to all the elements of the input      | List, vector or data frame | list                |
+| sapply <br> (simple) | sapply(X, FUN)           | Apply a function to all the elements of the input      | List, vector or data frame | vector or matrix    |
+| tapply <br> (tagged) | tapply(X, grouping, FUN) | Apply a function for each factor variable in an vector | Vector                     | matrix or array     |
+
+
+### apply()-usage
+gh
+
+### lapply()-usage
+gg
+
+### sapply()-usage
+dd
+
+### tapply()-usage
+aa
+
 
 # Dplyr - Gramma of Data Manipulation
 
-## Overview
+### Overview
 
 
 # Purr
 
-## Overview
+### Overview
 "purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
 
 
