@@ -86,8 +86,8 @@ if(!require("tidyverse")) install.packages("tidyverse")
   library(tidyverse) # for fill() 
 if(!require("formatR")) install.packages("formatR")
   library(formatR)
-if(!require("styler")) install.packages("styler")
-  library(styler)
+#if(!require("styler")) install.packages("styler")
+#  library(styler)
 library(knitr)
 knitr::opts_chunk$set(echo = T,
                       eval = T)
@@ -120,7 +120,7 @@ URL: Needs to be scraped from main page
 ### Configurate & Start Selenium/Browser
 
 ```{r Selenium-install, include=F}
-if(!require("tidyverse")) require(tidyverse) 
+if(!require("tidyverse")) install.packages("tidyverse") 
   library(tidyverse) # for fill() 
 if(!require("stringr")) install.packages("stringr")
   library(stringr) # for str_detect()
@@ -136,7 +136,6 @@ library(rvest) #for read_html(), html_elements()...
 #Start a selenium & Assign client to an R-object  
   rD <- rsDriver(port = 4561L, browser = "firefox")
   remDr <- rD[["client"]]
-  #remDr$quit
 ```
 
 
@@ -176,7 +175,6 @@ square(factor=2, value=5) #use args by name
 ```
 
 
-
 ### Define savepage()
 
 ```{r define_savepage}
@@ -208,19 +206,32 @@ page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a
 page
 ```
 
+
 # Iteration: Loops & Apply-family
 
 ### Overview
 
 - Often specific tasts needs to be executed multiple times
-- This iteration can be performed using loops or functions from the apply family
+- Iteration can be performed using loops or apply-functions
 
 Example:
-```{r example-iterations}
-mean(iris$Sepal.Length)
-mean(iris$Sepal.Width)
-mean(iris$Petal.Length)
-mean(iris$Petal.Width)
+```{r urls, echo=F}
+#Urls of all indiv. meeting ages
+urls <- html_elements(page, xpath = "/html/body/main/section/div[2]/div/div/div/div/div/ul/li/a") %>% # or: html_elements(page, css = "<enter CSS-Path >")
+html_attr("href") %>%
+paste0("https://www.bundestag.de",.) 
+```
+
+```{r example-iterations, eval=F}
+#Extract urls of all indiv. meetings
+      urls <- html_elements(page, xpath = "/html//ul/li/a") %>%
+        html_attr("href") %>%
+        paste0("https://www.bundestag.de",.) 
+#Save content of pages
+  meeting1 <- savepage(urls[1])
+  meeting2 <- savepage(urls[2])
+  meeting3 <- savepage(urls[3])
+  ...
 ```
 
 
@@ -229,8 +240,8 @@ mean(iris$Petal.Width)
 - With the break statement, we can stop the loop before it has looped through all the items:
 - With the next statement, we can skip an iteration without terminating the loop:
 
-```{r for-basic}
-for (x in names(iris)) {
+```{r for-basic, warning=FALSE}
+for (x in names(iris[1:4])) {
   print(mean(iris[,x]))
 }
 ```
@@ -255,14 +266,24 @@ for (x in fruits) {
 }
 ```
 
+### loop over urls
+- Create an empty list
+- save content of page pages as list within first list
+```{r loop-over-urls}
+meetings <- list()
+for (i in 1:length(urls)) {
+meetings[i] <- savepage(urls[i]) %>% list()
+}
+```
+
 ### while-loop
 - Execute a set of statements as long as a condition is TRUE
-- *break* statement stops the loop even if the while condition is TRUE:
+- *break* statement stops the loop (even if while-condition=TRUE):
 - *next* statement skips an iteration without terminating the loop:
 
 ```{r while-Basic}
 i <- 0
-while (i < 20) {
+while (i < 3) {
   i <- i + 1
   print(i)
 }
@@ -290,6 +311,31 @@ while (i < 10) {
 }
 ```
 
+
+### Collect urls of all meetings
+\fontsize{9}{6}\selectfont
+```{r Collect-urls}
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+button <- 1
+while (length(button)>0) {
+  page <- remDr$getPageSource(header = TRUE)[[1]] %>%  
+          read_html()
+  urls <- html_elements(page, xpath = "/html/body/main/section/div[2]/div/div/div/div/div/ul/li/a") %>%
+    html_attr("href") %>%
+    paste0("https://www.bundestag.de",.)
+  
+  webElem <- remDr$findElement("css", "body")
+  webElem$sendKeysToElement(list(key = "end"))
+  
+  # find the element
+  button <- remDr$findElements("/html/body/main/section/div[2]/div/div/div/div/div[7]/ul/li[6]/button/i",using = "xpath")
+  if(length(button)>0) {
+    button[[1]]$clickElement()   
+  }
+
+}
+```
+
 ### apply-family
 
 - The apply in R function can be feed with many functions to perform redundant application on a collection of object (data frame, list, vector, etc.). 
@@ -297,7 +343,7 @@ while (i < 10) {
 - Any function can be passed into
 
 ### Main apply functions
-\fontsize{8}{10}\selectfont
+\fontsize{10}{10}\selectfont
 | Function        | Arguments                | Objective                                              | Input                      | Output              |
 |-----------------|--------------------------|--------------------------------------------------------|----------------------------|---------------------|
 | apply           | apply(x, MARGIN, FUN)    | Apply a function to the rows or columns or both        | Data frame or matrix       | vector, list, array |
@@ -309,9 +355,8 @@ while (i < 10) {
 ### apply()-usage
 apply(x, MARGIN, FUN)
 
-```{r apply}
+```{r apply, warning=FALSE}
 m1 <- matrix(C<-(1:10),nrow=4, ncol=4)
-m1
 apply(m1, 1, sum) #1=by row
 apply(m1, 2, sum) #2=by column
 ```
@@ -326,11 +371,12 @@ lapply(cars, mean)
 ### sapply()-usage
 sapply(X, FUN)
 
-```{r lapply}
+```{r sapply}
 sapply(1:4, print)
 ```
 
 ### tapply()-usage
+\fontsize{8}{10}\selectfont
 tapply(X, grouping, FUN)
 ```{r tapply}
 tapply(iris$Sepal.Length , list(iris$Species), mean)
@@ -347,12 +393,40 @@ aggregate(iris$Sepal.Length , list(iris$Species), mean)
 
 ### Overview
 
+### Pipe-Operator
+
+### filter()
+
+### summarise()
+across
+
+### group_by()
+ungroup()
+
+### rowwise()
+
+### mutate()
+
+### distinct
+
+### slice
+
+### select
+
+
+
 
 # Purr
 
 ### Overview
 "purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
 
+map-functions:
+
+- transform input by applying a function to each element of a list or atomic vector
+- returning an object of the same length as the input
+
+### map()
 ```{r map}
 if(!require("purrr")) install.packages("purrr") 
   library(purrr) # for fill() 
@@ -363,26 +437,39 @@ mtcars %>%
   map_dbl("r.squared")
 ```
 
+### Versions of map()-function
+map_dbl(.x, .f, …)
+Return a double vector.
+map_dbl(x, mean)
+map_int(.x, .f, ...)
+Return an integer vector.
+map_int(x, length)
+map_chr(.x, .f, …)
+Return a character vector.
+map_chr(l1, paste, collapse = "")
+map_lgl(.x, .f, …)
+Return a logical vector.
+map_lgl(x, is.integer)
+
+
+### Extract dates of meetings
+
+```{r extract-dates}
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
+  map_chr(function(x) 
+    rep(html_element(x,xpath = "./h4") %>% 
+          html_text(),
+        length(html_elements(x,xpath = ".//a"))))
+date[3]
+
+```
+
+
+
 # Helpful Sources
 - [purr: Overview](https://purrr.tidyverse.org/)
 - [purr: References](https://purrr.tidyverse.org/reference/index.html)
-- [purr: Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf)
+- [purr: Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf)
+- [dplyr: Cheat Sheet](https://raw.githubusercontent.com/rstudio/cheatsheets/main/data-transformation.pdf)
 
-
-
-
-
-# Helpful sources
-
-- [Stringr: Overview](https://stringr.tidyverse.org/)
-- [Stringr: Introduction](https://cloud.r-project.org/web/packages/stringr/vignettes/stringr.html)
-- [Stringr: Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/strings.pdf)
-- [Stringr: Reference manual](https://cloud.r-project.org/web/packages/stringr/stringr.pdf)
-- [Base R String-functions vs Stringr](https://stringr.tidyverse.org/articles/from-base.html)
-- [Working with strings in R](https://r4ds.had.co.nz/strings.html)
-- [Regular expressions](https://cloud.r-project.org/web/packages/stringr/vignettes/regular-expressions.html)
-- [Primary R functions for dealing with regular expressions](https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html)
-
-
-### References
-All graphics are taken from [String manipulaton with stringr Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/strings.pdf)

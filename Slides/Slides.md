@@ -118,7 +118,6 @@ library(rvest) #for read_html(), html_elements()...
 #Start a selenium & Assign client to an R-object  
   rD <- rsDriver(port = 4561L, browser = "firefox")
   remDr <- rD[["client"]]
-  #remDr$quit
 ```
 
 
@@ -178,7 +177,6 @@ square(factor=2, value=5) #use args by name
 ```
 
 
-
 ### Define savepage()
 
 
@@ -214,10 +212,29 @@ page
 ## [2] <body class="bt-archived-page">\n  <div class="bt-archive-banner">\n    < ...
 ```
 
+
 # Iteration: Loops & Apply-family
 
 ### Overview
 
+- Often specific tasts needs to be executed multiple times
+- Iteration can be performed using loops or apply-functions
+
+Example:
+
+
+
+```r
+#Extract urls of all indiv. meetings
+      urls <- html_elements(page, xpath = "/html//ul/li/a") %>%
+        html_attr("href") %>%
+        paste0("https://www.bundestag.de",.) 
+#Save content of pages
+  meeting1 <- savepage(urls[1])
+  meeting2 <- savepage(urls[2])
+  meeting3 <- savepage(urls[3])
+  ...
+```
 
 
 ### for-loop
@@ -227,16 +244,16 @@ page
 
 
 ```r
-for (x in 1:10) {
-  if (x == 4)  break
-  print(x)
+for (x in names(iris[1:4])) {
+  print(mean(iris[,x]))
 }
 ```
 
 ```
-## [1] 1
-## [1] 2
-## [1] 3
+## [1] 5.843333
+## [1] 3.057333
+## [1] 3.758
+## [1] 1.199333
 ```
 
 ### for-loop: break
@@ -272,15 +289,26 @@ for (x in fruits) {
 ## [1] "cherry"
 ```
 
+### loop over urls
+- Create an empty list
+- save content of page pages as list within first list
+
+```r
+meetings <- list()
+for (i in 1:length(urls)) {
+meetings[i] <- savepage(urls[i]) %>% list()
+}
+```
+
 ### while-loop
 - Execute a set of statements as long as a condition is TRUE
-- *break* statement stops the loop even if the while condition is TRUE:
+- *break* statement stops the loop (even if while-condition=TRUE):
 - *next* statement skips an iteration without terminating the loop:
 
 
 ```r
 i <- 0
-while (i < 20) {
+while (i < 3) {
   i <- i + 1
   print(i)
 }
@@ -290,23 +318,6 @@ while (i < 20) {
 ## [1] 1
 ## [1] 2
 ## [1] 3
-## [1] 4
-## [1] 5
-## [1] 6
-## [1] 7
-## [1] 8
-## [1] 9
-## [1] 10
-## [1] 11
-## [1] 12
-## [1] 13
-## [1] 14
-## [1] 15
-## [1] 16
-## [1] 17
-## [1] 18
-## [1] 19
-## [1] 20
 ```
 
 ### while-loop: break
@@ -348,6 +359,32 @@ while (i < 10) {
 ## [1] 10
 ```
 
+
+### Collect urls of all meetings
+\fontsize{10}{6}\selectfont
+
+```r
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+button <- 1
+while (length(button)>0) {
+  page <- remDr$getPageSource(header = TRUE)[[1]] %>%  
+          read_html()
+  urls <- html_elements(page, xpath = "/html/body/main/section/div[2]/div/div/div/div/div/ul/li/a") %>%
+    html_attr("href") %>%
+    paste0("https://www.bundestag.de",.)
+  
+  webElem <- remDr$findElement("css", "body")
+  webElem$sendKeysToElement(list(key = "end"))
+  
+  # find the element
+  button <- remDr$findElements("/html/body/main/section/div[2]/div/div/div/div/div[7]/ul/li[6]/button/i",using = "xpath")
+  if(length(button)>0) {
+    button[[1]]$clickElement()   
+  }
+
+}
+```
+
 ### apply-family
 
 - The apply in R function can be feed with many functions to perform redundant application on a collection of object (data frame, list, vector, etc.). 
@@ -355,8 +392,8 @@ while (i < 10) {
 - Any function can be passed into
 
 ### Main apply functions
-\fontsize{8}{10}\selectfont
-| Function        | Arguments~~~~~~~~~~~~    | Objective                                              | Input                      | Output              |
+\fontsize{10}{10}\selectfont
+| Function        | Arguments                | Objective                                              | Input                      | Output              |
 |-----------------|--------------------------|--------------------------------------------------------|----------------------------|---------------------|
 | apply           | apply(x, MARGIN, FUN)    | Apply a function to the rows or columns or both        | Data frame or matrix       | vector, list, array |
 | lapply <br> (list)   | lapply(X, FUN)           | Apply a function to all the elements of the input      | List, vector or data frame | list                |
@@ -365,21 +402,114 @@ while (i < 10) {
 
 
 ### apply()-usage
-gh
+apply(x, MARGIN, FUN)
+
+
+```r
+m1 <- matrix(C<-(1:10),nrow=4, ncol=4)
+apply(m1, 1, sum) #1=by row
+```
+
+```
+## [1] 18 22 16 20
+```
+
+```r
+apply(m1, 2, sum) #2=by column
+```
+
+```
+## [1] 10 26 22 18
+```
 
 ### lapply()-usage
-gg
+lapply(X, FUN)
+
+
+```r
+lapply(cars, mean)
+```
+
+```
+## $speed
+## [1] 15.4
+## 
+## $dist
+## [1] 42.98
+```
 
 ### sapply()-usage
-dd
+sapply(X, FUN)
+
+
+```r
+sapply(1:4, print)
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+```
+
+```
+## [1] 1 2 3 4
+```
 
 ### tapply()-usage
-aa
+\fontsize{8}{10}\selectfont
+tapply(X, grouping, FUN)
+
+```r
+tapply(iris$Sepal.Length , list(iris$Species), mean)
+```
+
+```
+##     setosa versicolor  virginica 
+##      5.006      5.936      6.588
+```
+
+Similar to tapply() is aggregate() which returns a data frame
+
+```r
+aggregate(iris$Sepal.Length , list(iris$Species), mean)
+```
+
+```
+##      Group.1     x
+## 1     setosa 5.006
+## 2 versicolor 5.936
+## 3  virginica 6.588
+```
+
 
 
 # Dplyr - Gramma of Data Manipulation
 
 ### Overview
+
+### Pipe-Operator
+
+### filter()
+
+### summarise()
+across
+
+### group_by()
+ungroup()
+
+### rowwise()
+
+### mutate()
+
+### distinct
+
+### slice
+
+### select
+
+
 
 
 # Purr
@@ -387,6 +517,12 @@ aa
 ### Overview
 "purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
 
+map-functions:
+
+- transform input by applying a function to each element of a list or atomic vector
+- returning an object of the same length as the input
+
+### map()
 
 ```r
 if(!require("purrr")) install.packages("purrr") 
@@ -403,26 +539,30 @@ mtcars %>%
 ## 0.5086326 0.4645102 0.4229655
 ```
 
+
+### Extract dates of meetings
+
+
+```r
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
+  map(function(x) 
+    rep(html_element(x,xpath = "./h4") %>% 
+          html_text(),
+        length(html_elements(x,xpath = ".//a"))))
+date[3]
+```
+
+```
+## [[1]]
+## [1] "17. Mai 2021" "17. Mai 2021"
+```
+
+
+
 # Helpful Sources
 - [purr: Overview](https://purrr.tidyverse.org/)
 - [purr: References](https://purrr.tidyverse.org/reference/index.html)
-- [purr: Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf)
+- [purr: Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf)
+- [dplyr: Cheat Sheet](https://raw.githubusercontent.com/rstudio/cheatsheets/main/data-transformation.pdf)
 
-
-
-
-
-# Helpful sources
-
-- [Stringr: Overview](https://stringr.tidyverse.org/)
-- [Stringr: Introduction](https://cloud.r-project.org/web/packages/stringr/vignettes/stringr.html)
-- [Stringr: Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/strings.pdf)
-- [Stringr: Reference manual](https://cloud.r-project.org/web/packages/stringr/stringr.pdf)
-- [Base R String-functions vs Stringr](https://stringr.tidyverse.org/articles/from-base.html)
-- [Working with strings in R](https://r4ds.had.co.nz/strings.html)
-- [Regular expressions](https://cloud.r-project.org/web/packages/stringr/vignettes/regular-expressions.html)
-- [Primary R functions for dealing with regular expressions](https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html)
-
-
-### References
-All graphics are taken from [String manipulaton with stringr Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/strings.pdf)
