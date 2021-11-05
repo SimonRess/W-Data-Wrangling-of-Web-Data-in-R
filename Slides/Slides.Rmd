@@ -457,7 +457,7 @@ map_lgl(x, is.integer)
 ```{r extract-dates}
 page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
 date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
-  map_chr(function(x) 
+  map(function(x) 
     rep(html_element(x,xpath = "./h4") %>% 
           html_text(),
         length(html_elements(x,xpath = ".//a"))))
