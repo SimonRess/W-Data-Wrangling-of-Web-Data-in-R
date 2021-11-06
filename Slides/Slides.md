@@ -177,7 +177,7 @@ square(factor=2, value=5) #use args by name
 ```
 
 
-### Define savepage()
+### Use Case: define savepage()
 
 
 ```r
@@ -213,7 +213,7 @@ page
 ```
 
 
-# Iteration: Loops & Apply-family
+# Iteration
 
 ### Overview
 
@@ -236,8 +236,11 @@ Example:
   ...
 ```
 
+## Loops
 
-### for-loop
+...
+
+### For-Loop
 - A for loop is used for iterating over a sequence:
 - With the break statement, we can stop the loop before it has looped through all the items:
 - With the next statement, we can skip an iteration without terminating the loop:
@@ -289,7 +292,7 @@ for (x in fruits) {
 ## [1] "cherry"
 ```
 
-### loop over urls
+### Use Case: loop over urls
 - Create an empty list
 - save content of page pages as list within first list
 
@@ -360,8 +363,8 @@ while (i < 10) {
 ```
 
 
-### Collect urls of all meetings
-\fontsize{10}{6}\selectfont
+### Use Case: collect urls of all meetings
+\fontsize{9}{6}\selectfont
 
 ```r
 page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
@@ -385,7 +388,7 @@ while (length(button)>0) {
 }
 ```
 
-### apply-family
+## Apply-Family
 
 - The apply in R function can be feed with many functions to perform redundant application on a collection of object (data frame, list, vector, etc.). 
 - The purpose of apply() is primarily to avoid explicit uses of loop constructs. 
@@ -483,6 +486,66 @@ aggregate(iris$Sepal.Length , list(iris$Species), mean)
 ## 3  virginica 6.588
 ```
 
+## Purr-package
+
+### Overview
+
+- "purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
+- We focus on the map()-functions:
+  - transform input by applying a function to each element of a list or atomic vector
+  - returning an object of the same length as the input
+
+### map()-usage
+Syntax: *map(.x, .f, ...)*
+
+```r
+if(!require("purrr")) install.packages("purrr") 
+  library(purrr) # for fill() 
+mtcars %>%
+  split(.$cyl) %>% # from base R
+  map(~ lm(mpg ~ wt, data = .)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
+```
+
+```
+##         4         6         8 
+## 0.5086326 0.4645102 0.4229655
+```
+
+### Versions of map()-function
+
+- map_**dbl**(.x, .f, …)
+  - Return a double vector.
+  - map_dbl(x, mean)
+- map_**int**(.x, .f, ...)
+  - Return an integer vector.
+  - map_int(x, length)
+- map_**chr**(.x, .f, …)
+  - Return a character vector.
+  - map_chr(l1, paste, collapse = "")
+- map_**lgl**(.x, .f, …)
+  - Return a logical vector.
+  - map_lgl(x, is.integer)
+
+
+### Use Cases: extract dates of meetings
+
+
+```r
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
+  map(function(x) 
+    rep(html_element(x,xpath = "./h4") %>% 
+          html_text(),
+        length(html_elements(x,xpath = ".//a"))))
+date[3]
+```
+
+```
+## [[1]]
+## [1] "17. Mai 2021" "17. Mai 2021"
+```
 
 
 # Dplyr - Gramma of Data Manipulation
@@ -512,51 +575,7 @@ ungroup()
 
 
 
-# Purr
 
-### Overview
-"purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
-
-map-functions:
-
-- transform input by applying a function to each element of a list or atomic vector
-- returning an object of the same length as the input
-
-### map()
-
-```r
-if(!require("purrr")) install.packages("purrr") 
-  library(purrr) # for fill() 
-mtcars %>%
-  split(.$cyl) %>% # from base R
-  map(~ lm(mpg ~ wt, data = .)) %>%
-  map(summary) %>%
-  map_dbl("r.squared")
-```
-
-```
-##         4         6         8 
-## 0.5086326 0.4645102 0.4229655
-```
-
-
-### Extract dates of meetings
-
-
-```r
-page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
-date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
-  map(function(x) 
-    rep(html_element(x,xpath = "./h4") %>% 
-          html_text(),
-        length(html_elements(x,xpath = ".//a"))))
-date[3]
-```
-
-```
-## [[1]]
-## [1] "17. Mai 2021" "17. Mai 2021"
-```
 
 
 

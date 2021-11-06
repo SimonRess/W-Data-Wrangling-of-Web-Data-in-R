@@ -82,6 +82,9 @@ header-includes:
 ---
 
 ```{r setup, include=FALSE}
+# if(!require("installr")) install.packages("installr")
+#  library(installr)
+#  updateR()
 if(!require("tidyverse")) install.packages("tidyverse") 
   library(tidyverse) # for fill() 
 if(!require("formatR")) install.packages("formatR")
@@ -146,7 +149,7 @@ library(rvest) #for read_html(), html_elements()...
 
 - Functions are **blocks of codes** which can be executed repeatedly by calling them
 - **Parameters** (data) can be passed into them, which are used by the code inside
-- **Data can be returned** from a function
+- **Data can be returned** from a function: return(x)
 
 *Syntax:*
 ```{r functions, eval=F}
@@ -175,7 +178,7 @@ square(factor=2, value=5) #use args by name
 ```
 
 
-### Define savepage()
+### Use Case: define savepage()
 
 ```{r define_savepage}
 #Load url & return content as r-object 
@@ -207,7 +210,7 @@ page
 ```
 
 
-# Iteration: Loops & Apply-family
+# Iteration
 
 ### Overview
 
@@ -234,8 +237,11 @@ paste0("https://www.bundestag.de",.)
   ...
 ```
 
+## Loops
 
-### for-loop
+...
+
+### For-Loop
 - A for loop is used for iterating over a sequence:
 - With the break statement, we can stop the loop before it has looped through all the items:
 - With the next statement, we can skip an iteration without terminating the loop:
@@ -266,7 +272,7 @@ for (x in fruits) {
 }
 ```
 
-### loop over urls
+### Use Case: loop over urls
 - Create an empty list
 - save content of page pages as list within first list
 ```{r loop-over-urls}
@@ -312,7 +318,7 @@ while (i < 10) {
 ```
 
 
-### Collect urls of all meetings
+### Use Case: collect urls of all meetings
 \fontsize{9}{6}\selectfont
 ```{r Collect-urls}
 page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
@@ -336,7 +342,7 @@ while (length(button)>0) {
 }
 ```
 
-### apply-family
+## Apply-Family
 
 - The apply in R function can be feed with many functions to perform redundant application on a collection of object (data frame, list, vector, etc.). 
 - The purpose of apply() is primarily to avoid explicit uses of loop constructs. 
@@ -362,22 +368,22 @@ apply(m1, 2, sum) #2=by column
 ```
 
 ### lapply()-usage
-lapply(X, FUN)
+**Syntax:** *lapply(X, FUN)*
 
 ```{r lapply}
 lapply(cars, mean)
 ```
 
 ### sapply()-usage
-sapply(X, FUN)
+**Syntax:** *sapply(X, FUN)*
 
 ```{r sapply}
 sapply(1:4, print)
 ```
 
 ### tapply()-usage
-\fontsize{8}{10}\selectfont
-tapply(X, grouping, FUN)
+\fontsize{9}{10}\selectfont
+**Syntax:** *tapply(X, grouping, FUN)*
 ```{r tapply}
 tapply(iris$Sepal.Length , list(iris$Species), mean)
 ```
@@ -387,6 +393,57 @@ Similar to tapply() is aggregate() which returns a data frame
 aggregate(iris$Sepal.Length , list(iris$Species), mean)
 ```
 
+## Purr-package
+
+- "purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
+- We focus on the map()-functions:
+  - It transforms input by applying a function to each element of a list or atomic vector
+  - Returning an object of the same length as the input
+  - Similar to lapply, but ...
+    - consistent with all the other functions in purrr
+    - allows shortcuts for FUN
+
+### map()-usage
+**Syntax:** *map(data, FUN)*
+  In pipes: *. %>% map(~ FUN)*  | *. %>% map(function(x) FUN)*
+```{r map}
+if(!require("purrr")) install.packages("purrr") 
+  library(purrr) # for fill() 
+mtcars %>%
+  split(.$cyl) %>% # from base R
+  map(~ lm(mpg ~ wt, data = .)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
+```
+
+### Versions of map()-function
+
+- map_**dbl**(.x, .f, …)
+  - Return a double vector.
+  - example: *map_dbl(x, mean)*
+- map_**int**(.x, .f, ...)
+  - Return an integer vector.
+  - example: *map_int(x, length)*
+- map_**chr**(.x, .f, …)
+  - Return a character vector.
+  - example: *map_chr(l1, paste, collapse = "")*
+- map_**lgl**(.x, .f, …)
+  - Return a logical vector.
+  - example: *map_lgl(x, is.integer)*
+
+
+### Use Cases: extract dates of meetings
+
+```{r extract-dates}
+page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
+date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
+  lapply(\(.)
+    rep(html_element(.,xpath = "./h4") %>% 
+          html_text(),
+        length(html_elements(.,xpath = ".//a"))))
+date[3]
+
+```
 
 
 # Dplyr - Gramma of Data Manipulation
@@ -416,60 +473,24 @@ ungroup()
 
 
 
-# Purr
 
-### Overview
-"purrr enhances R’s functional programming (FP) toolkit by providing a complete and consistent set of tools for working with functions and vectors."
-
-map-functions:
-
-- transform input by applying a function to each element of a list or atomic vector
-- returning an object of the same length as the input
-
-### map()
-```{r map}
-if(!require("purrr")) install.packages("purrr") 
-  library(purrr) # for fill() 
-mtcars %>%
-  split(.$cyl) %>% # from base R
-  map(~ lm(mpg ~ wt, data = .)) %>%
-  map(summary) %>%
-  map_dbl("r.squared")
-```
-
-### Versions of map()-function
-map_dbl(.x, .f, …)
-Return a double vector.
-map_dbl(x, mean)
-map_int(.x, .f, ...)
-Return an integer vector.
-map_int(x, length)
-map_chr(.x, .f, …)
-Return a character vector.
-map_chr(l1, paste, collapse = "")
-map_lgl(.x, .f, …)
-Return a logical vector.
-map_lgl(x, is.integer)
-
-
-### Extract dates of meetings
-
-```{r extract-dates}
-page <- savepage("https://www.bundestag.de/webarchiv/Ausschuesse/ausschuesse19/a07/Anhoerungen")
-date <- html_elements(page,xpath = "/html/body/main/section/div[2]/div/div/div/div/div[@class= 'bt-listenteaser']") %>%
-  map(function(x) 
-    rep(html_element(x,xpath = "./h4") %>% 
-          html_text(),
-        length(html_elements(x,xpath = ".//a"))))
-date[3]
-
-```
 
 
 
 # Helpful Sources
+- [Chapter: Iteration, in "R for Data Science"](https://r4ds.had.co.nz/iteration.html)
 - [purr: Overview](https://purrr.tidyverse.org/)
 - [purr: References](https://purrr.tidyverse.org/reference/index.html)
+- [purr: Reference manual](https://cloud.r-project.org/web/packages/purrr/purrr.pdf)
 - [purr: Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf)
 - [dplyr: Cheat Sheet](https://raw.githubusercontent.com/rstudio/cheatsheets/main/data-transformation.pdf)
 
+[Tilde Operator]https://rdrr.io/r/base/tilde.html
+[Assignment Operators]https://rdrr.io/r/base/assignOps.html
+[Arithmetic Operators](https://rdrr.io/r/base/Arithmetic.html)
+[Colon Operator](https://rdrr.io/r/base/Colon.html)
+[Relational Operators](https://rdrr.io/r/base/Comparison.html)
+[Logical Operators](https://rdrr.io/r/base/Logic.html)
+[Double Colon and Triple Colon Operators](https://rdrr.io/r/base/ns-dblcolon.html)
+[Operators on the Date Class](https://rdrr.io/r/base/Ops.Date.html)
+[Operator Syntax and Precedence](https://rdrr.io/r/base/Syntax.html)
